@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <title>SQL 資料庫快速檢視</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; }
+    th { background: #f0f0f0; }
+    select { padding: 6px; }
+  </style>
+</head>
+<body>
+
+<h2>SQL 資料庫快速檢視（中文欄位）</h2>
+
+<select id="tableSelect"></select>
+
+<table id="dataTable"></table>
+
+<script>
+const api = "http://127.0.0.1:8000";
+
+// 取得資料表清單
+fetch(api + "/tables")
+  .then(res => res.json())
+  .then(tables => {
+    const select = document.getElementById("tableSelect");
+    select.innerHTML = "";
+
+    tables.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.TABLE_NAME;
+      opt.text = t.TABLE_NAME;
+      select.appendChild(opt);
+    });
+
+    if (tables.length > 0) {
+      loadTable(tables[0].TABLE_NAME);
+    }
+  });
+
+document.getElementById("tableSelect").onchange = e => {
+  loadTable(e.target.value);
+};
+
+function loadTable(table) {
+  fetch(api + "/data/" + table)
+    .then(res => res.json())
+    .then(rows => {
+      const tableEl = document.getElementById("dataTable");
+      tableEl.innerHTML = "";
+
+      if (rows.length === 0) return;
+
+      // 表頭
+      const header = document.createElement("tr");
+      Object.keys(rows[0]).forEach(col => {
+        const th = document.createElement("th");
+        th.innerText = col;
+        header.appendChild(th);
+      });
+      tableEl.appendChild(header);
+
+      // 資料列
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        Object.values(r).forEach(v => {
+          const td = document.createElement("td");
+          td.innerText = v ?? "";
+          tr.appendChild(td);
+        });
+        tableEl.appendChild(tr);
+      });
+    });
+}
+</script>
+
+</body>
+</html>
